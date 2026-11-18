@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nightlight: your clinic, in the ER</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6efe4;--card:#fffaf1;--ink:#2a2233;--mute:#6b6076;--line:#e2d6c3;--lamp:#c2410c;--lamp-ink:#fff;--soft:#fbe6c8;--ok:#1f6b4f;--ok-bg:#dff1e8;--alert:#8a1c3a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171327;--card:#221c38;--ink:#f3ecdf;--mute:#b4a9c6;--line:#3a3158;--lamp:#ffb454;--lamp-ink:#1b1225;--soft:#3a2c3d;--ok:#7be0b0;--ok-bg:#16352b;--alert:#ff9db5}}
+:root[data-theme="dark"]{--bg:#171327;--card:#221c38;--ink:#f3ecdf;--mute:#b4a9c6;--line:#3a3158;--lamp:#ffb454;--lamp-ink:#1b1225;--soft:#3a2c3d;--ok:#7be0b0;--ok-bg:#16352b;--alert:#ff9db5}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 Georgia,"Iowan Old Style",serif}
+h1,h2,button,.tag,label{font-family:"Trebuchet MS","Segoe UI",Helvetica,sans-serif}
+main{max-width:440px;margin:0 auto;padding:18px 16px 40px;min-height:100%}
+.demo{font-size:.78rem;color:var(--mute);margin-bottom:10px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.moon{width:34px;height:34px;border-radius:50%;background:var(--lamp);box-shadow:0 0 0 6px var(--soft)}
+.top b{font-family:"Trebuchet MS",sans-serif;font-size:1.1rem}
+h1{font-size:1.65rem;line-height:1.2;margin:6px 0 8px}
+h2{font-size:1.15rem;margin:0 0 6px}
+p{margin:0 0 12px}.mute{color:var(--mute);font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.btn{display:block;width:100%;background:var(--lamp);color:var(--lamp-ink);border:0;border-radius:12px;padding:16px;font-size:1.05rem;font-weight:700;cursor:pointer;margin-bottom:10px;text-align:center}
+.btn.alt{background:none;color:var(--ink);border:1.5px solid var(--line)}
+.btn.help{background:var(--alert);color:#fff}
+button:focus-visible,input:focus-visible{outline:3px solid var(--lamp);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:10px 14px;font-size:.95rem;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--lamp);color:var(--lamp-ink);border-color:var(--lamp);font-weight:700}
+.warn{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:.9rem;margin-bottom:12px}
+.msg{padding:10px 12px;border-radius:14px;margin-bottom:8px;max-width:88%}
+.msg.n{background:var(--card);border:1px solid var(--line)}
+.msg.me{background:var(--lamp);color:var(--lamp-ink);margin-left:auto}
+.tag{display:inline-block;font-size:.78rem;font-weight:700;background:var(--ok-bg);color:var(--ok);padding:3px 10px;border-radius:99px;margin-bottom:8px}
+.sw{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.sw:last-child{border:0}
+.sw input{width:24px;height:24px;accent-color:var(--lamp)}
+.note{border-left:4px solid var(--lamp);padding:8px 12px;background:var(--card);font-size:.95rem;margin-bottom:12px}
+.steps div{display:flex;gap:10px;align-items:center;padding:8px 0}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--line);flex:none}.dot.on{background:var(--ok)}
+.rate{display:flex;gap:8px;margin-bottom:12px}.rate .chip{flex:1;text-align:center;padding:12px 0}
+</style>
+</head>
+<body>
+<main>
+<div class="demo">Prototype with sample content. No real data, nothing stored, not for emergencies. Call 911 for an emergency.</div>
+<div class="top"><div class="moon" aria-hidden="true"></div><b>Nightlight</b></div>
+<div id="app"></div>
+</main>
+<script>
+var st={s:"home",sym:[],share:{c:true,m:true,t:true,f:false},rate:0,heard:false,msgs:0};
+var SYM=["Very sleepy or confused","Vomiting","Chest pain","Injury or fall","Pain","Trouble breathing","Feeling very thirsty","Not sure"];
+var A=document.getElementById("app");
+function go(s){st.s=s;draw();window.scrollTo(0,0)}
+function draw(){V[st.s]();bind()}
+function bind(){A.querySelectorAll("[data-go]").forEach(function(b){b.onclick=function(){go(b.dataset.go)}});
+ A.querySelectorAll("[data-sym]").forEach(function(b){b.onclick=function(){var v=b.dataset.sym,i=st.sym.indexOf(v);if(i<0)st.sym.push(v);else st.sym.splice(i,1);b.setAttribute("aria-pressed",i<0)}});
+ A.querySelectorAll("[data-sw]").forEach(function(b){b.onchange=function(){st.share[b.dataset.sw]=b.checked;var n=document.getElementById("note");if(n)n.textContent=note()}});
+ A.querySelectorAll("[data-rate]").forEach(function(b){b.onclick=function(){st.rate=+b.dataset.rate;A.querySelectorAll("[data-rate]").forEach(function(x){x.setAttribute("aria-pressed",+x.dataset.rate===st.rate)})}});
+}
+function note(){var p=[];
+ if(st.share.c)p.push("has type 1 diabetes");
+ if(st.share.m)p.push("takes insulin daily");
+ if(st.share.t){p.push(st.sym.length?"tonight: "+st.sym.join(", ").toLowerCase():"tonight: feeling unwell")}
+ var t=p.length?"Incoming: patient who "+p.join("; ")+".":"Incoming: patient arriving. No details shared.";
+ if(st.share.c&&st.sym.indexOf("Very sleepy or confused")>-1)t+=" Please check glucose and ketones on arrival.";
+ return t}
+var V={
+home:function(){A.innerHTML='<h1>Your clinic’s night circle is here.</h1><p class="mute">Your clinic opens at 8:00 a.m. You don’t have to wait for it. Talk to someone from your own care team now, and go to the ER with them beside you.</p>'+
+ '<button class="btn" data-go="how">I need care tonight</button><button class="btn alt" data-go="card">Set up my health card ahead of time</button>'+
+ '<div class="card"><h2>What you can count on</h2><p class="mute" style="margin:0">A real person answers. You choose what gets shared. Nothing is recorded. Going to the ER never has to be a fight.</p></div>'},
+card:function(){A.innerHTML='<h1>Your health card</h1><p class="mute">Filled in with your own clinic, in your words, so nobody has to guess. Your clinic keeps it. It only goes to the ER if you say yes.</p><div class="card"><div class="sw"><span>Conditions: type 1 diabetes</span></div><div class="sw"><span>Medicines: insulin</span></div><div class="sw"><span>Things that can look like drinking in me: very high or low blood sugar</span></div></div><button class="btn" data-go="home">Done</button>'},
+how:function(){A.innerHTML='<h1>What’s going on?</h1><p class="mute">Pick anything that fits. You can skip this and just talk.</p><div class="warn"><b>Emergency?</b> Trouble breathing, chest pain, or you can’t stay awake: call 911.</div><div class="chips">'+SYM.map(function(x){return '<button class="chip" aria-pressed="'+(st.sym.indexOf(x)>-1)+'" data-sym="'+x+'">'+x+'</button>'}).join("")+'</div><button class="btn" data-go="circle">Talk to my clinic’s night circle</button><button class="btn alt" data-go="home">Back</button>'},
+circle:function(){A.innerHTML='<span class="tag">Connected to your clinic team</span><div class="msg n">Hi, it’s Dana, the night nurse from your clinic team. I’m glad you reached out. Tell me what’s been happening, in your own words.</div><div class="msg me">'+(st.sym.length?"I’ve had: "+st.sym.join(", ").toLowerCase()+".":"I’m not feeling right.")+'</div><div class="msg n">Thank you. With what you’ve told me, I think tonight is the right time to go in. Don’t wait for the morning. You won’t be going alone. I’ll stay on the phone, and a companion will meet you at the door.</div><p class="mute">You can talk, text, or call. Nothing is recorded.</p><button class="btn" data-go="share">Okay, let’s get ready</button><button class="btn alt" data-go="home">Not tonight</button>'},
+share:function(){A.innerHTML='<h1>You decide what goes ahead</h1><p class="mute">With your yes, your clinic phones the ER before you arrive, so the first words in the chart are medical.</p><div class="card">'+
+ [["c","My conditions"],["m","My medicines"],["t","What’s happening tonight"],["f","Call my family contact"]].map(function(r){return '<label class="sw"><span>'+r[1]+'</span><input type="checkbox" data-sw="'+r[0]+'"'+(st.share[r[0]]?" checked":"")+'></label>'}).join("")+'</div><p class="mute">This is what the ER hears first:</p><div class="note" id="note">'+note()+'</div><button class="btn" data-go="going">Send ahead and head in</button><button class="btn alt" data-go="circle">Back</button>'},
+going:function(){A.innerHTML='<h1>You’re on your way</h1><div class="card steps"><div><span class="dot on"></span>ER told you’re coming, with your approval</div><div><span class="dot on"></span>Companion will meet you at the door</div><div><span class="dot on"></span>Dana stays on the line if you want</div></div><button class="btn" data-go="er">I’ve arrived</button><button class="btn alt" data-go="share">Back</button>'},
+er:function(){A.innerHTML='<h1>You’re not alone in here</h1><p class="mute">Your companion is with you. Your clinic team is a tap away.</p><button class="btn" data-go="call">Call Dana, my clinic nurse</button><button class="btn alt" data-go="er">Show my health card to triage</button><button class="btn help" data-go="heard">I don’t feel heard</button><button class="btn alt" data-go="after">I’m done, heading home</button>'+(st.heard?'<div class="warn">Sent quietly. Your companion and the charge nurse know, and a second clinician review has been requested. You don’t have to explain.</div>':'')},
+call:function(){A.innerHTML='<span class="tag">Calling your clinic team</span><div class="card"><p>Dana: “I’m right here. I can hear you, and I can speak to the nurse for you if you want.”</p><p class="mute" style="margin:0">Sample call screen. Not recorded.</p></div><button class="btn" data-go="er">Back to my visit</button>'},
+heard:function(){st.heard=true;go("er")},
+after:function(){A.innerHTML='<h1>Thank you for coming in</h1><p class="mute">Tomorrow Dana will check in, in the way you choose. How did tonight feel?</p><div class="rate">'+[1,2,3,4,5].map(function(n){return '<button class="chip" aria-pressed="'+(st.rate===n)+'" data-rate="'+n+'">'+n+'</button>'}).join("")+'</div><p class="mute">1 is not heard, 5 is heard. Your answer goes to your community’s review group first, not just the hospital.</p><button class="btn" data-go="home">Finish</button>'}
+};
+draw();
+</script>
+</body>
+</html>
